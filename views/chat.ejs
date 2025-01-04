@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+            color: #00FF00;
+        }
+        h1 {
+            text-align: center;
+            color: #00FF00;
+            margin: 20px 0;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .home-btn {
+            padding: 10px 20px;
+            background: #00FF00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px;
+            align-self: flex-end;
+            transition: background-color 0.3s ease;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        .home-btn:hover {
+            background-color: #00cc00;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #111;
+            border: 1px solid #00FF00;
+            border-radius: 10px;
+            margin: 0 20px 20px;
+            box-shadow: 0 2px 8px rgba(0, 255, 0, 0.2);
+            animation: fadeIn 1s ease-in-out;
+        }
+        .message {
+            display: flex;
+            margin-bottom: 10px;
+            max-width: 70%;
+            color: #00FF00;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        .message.sender {
+            justify-content: flex-end;
+            align-self: flex-end;
+            background-color: #222;
+        }
+        .message.receiver {
+            justify-content: flex-start;
+            align-self: flex-start;
+            background-color: #333;
+        }
+        .message-content {
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 255, 0, 0.2);
+            position: relative;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #888;
+            text-align: right;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #ff0000;
+            color: #000;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .delete-btn:hover {
+            background: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat History</h1>
+    <button class="home-btn" onclick="window.location.href='/index'">Home</button>
+    <div class="chat-container">
+        <% messages.forEach(function(message) { %>
+            <div class="message <%= message.sender === user1 ? 'sender' : 'receiver' %>">
+                <div class="message-content">
+                    <strong><%= message.sender %>:</strong> <%= message.message %>
+                    <div class="timestamp"><%= message.timestamp %></div>
+                    <button class="delete-btn" onclick="deleteMessage('<%= message.id %>')">Delete</button>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+    <script>
+        function deleteMessage(messageId) {
+            fetch('/delete-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: messageId })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete message');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

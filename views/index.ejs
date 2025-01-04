@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+            color: #00FF00;
+        }
+        h1 {
+            text-align: center;
+            color: #00FF00;
+            margin: 20px 0;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #111;
+            border: 1px solid #00FF00;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 255, 0, 0.2);
+            margin: 0 auto 20px;
+        }
+        .message {
+            display: flex;
+            margin-bottom: 10px;
+            max-width: 70%;
+            color: #00FF00;
+        }
+        .message.sender {
+            justify-content: flex-end;
+            align-self: flex-end;
+            background-color: #222;
+        }
+        .message.receiver {
+            justify-content: flex-start;
+            align-self: flex-start;
+            background-color: #333;
+        }
+        .message-content {
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 255, 0, 0.2);
+        }
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        #messages li {
+            margin-bottom: 10px;
+        }
+        #form {
+            display: flex;
+            padding: 10px;
+            background-color: #111;
+            border-top: 1px solid #00FF00;
+        }
+        #input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #00FF00;
+            border-radius: 8px;
+            margin-right: 10px;
+            background-color: #000;
+            color: #00FF00;
+        }
+        button {
+            padding: 10px 20px;
+            background: #00FF00;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #00cc00;
+        }
+        button:disabled {
+            background: #555;
+        }
+        #nameForm {
+            display: flex;
+            margin: 20px 0;
+        }
+        #nameInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #00FF00;
+            border-radius: 8px;
+            margin-right: 10px;
+            background-color: #000;
+            color: #00FF00;
+        }
+        #nameButton {
+            padding: 10px 20px;
+            background: #00FF00;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #nameButton:hover {
+            background-color: #00cc00;
+        }
+        #recipient-container {
+            display: flex;
+            padding: 10px;
+            background-color: #111;
+            border: 1px solid #00FF00;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        #recipient {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #00FF00;
+            border-radius: 8px;
+            margin-right: 10px;
+            background-color: #000;
+            color: #00FF00;
+        }
+        #sendPrivateMessage {
+            background: #ff9100;
+            color: black;
+            transition: background-color 0.3s;
+        }
+        #sendPrivateMessage:hover {
+            background-color: #cc7300;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Room</h1>
+    <div class="chat-container">
+        <ul id="messages"></ul>
+    </div>
+    <form id="form" action="">
+        <input id="input" autocomplete="off" placeholder="Type a message..." />
+        <button type="submit">Send</button>
+    </form>
+    <div id="recipient-container">
+        <input id="recipient" placeholder="Recipient username" />
+        <button id="sendPrivateMessage">Send Private Message</button>
+    </div>
+    <form id="nameForm" action="/chat" method="post">
+        <input id="nameInput" name="name" placeholder="Enter the name" />
+        <button type="submit" id="nameButton">History</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io();
+            const username = "<%= username %>";
+            socket.emit('set username', username);
+
+            const form = document.getElementById('form');
+            const input = document.getElementById('input');
+            const messages = document.getElementById('messages');
+            const recipientInput = document.getElementById('recipient');
+            const sendPrivateMessageButton = document.getElementById('sendPrivateMessage');
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (input.value) {
+                    socket.emit('chat message', input.value);
+                    input.value = '';
+                }
+            });
+
+            socket.on('chat message', function(data) {
+                const item = document.createElement('li');
+                item.classList.add('message', data.username === username ? 'sender' : 'receiver');
+                item.innerHTML = `<div class="message-content"><strong>${data.username}:</strong> ${data.message}</div>`;
+                messages.appendChild(item);
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+
+            socket.on('private message', function(data) {
+                const item = document.createElement('li');
+                item.classList.add('message', 'receiver');
+                item.innerHTML = `<div class="message-content"><strong>Private from ${data.from}:</strong> ${data.message}</div>`;
+                messages.appendChild(item);
+                window.scrollTo(0, document.body.scrollHeight);
+            });
+
+            sendPrivateMessageButton.addEventListener('click', function() {
+                const recipient = recipientInput.value;
+                const message = prompt("Enter your private message:");
+                if (recipient && message) {
+                    socket.emit('private message', { to: recipient, message: message });
+                }
+            });
+
+            socket.on('username set', function(username) {
+                console.log(`Your username is set to ${username}`);
+            });
+        });
+    </script>
+</body>
+</html>
